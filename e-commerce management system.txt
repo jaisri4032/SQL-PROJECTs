@@ -1,0 +1,260 @@
+mysql> CREATE DATABASE ECommerceManagement;
+Query OK, 1 row affected (0.01 sec)
+
+mysql> USE ECommerceManagement;
+Database changed
+mysql> 
+mysql> -- 1. Stores / Vendor Table
+mysql> CREATE TABLE Stores (
+    ->     Store_ID INT PRIMARY KEY AUTO_INCREMENT,
+    ->     Store_Name VARCHAR(100) NOT NULL,
+    ->     Seller_Location VARCHAR(100) DEFAULT 'Visakhapatnam'
+    -> );
+Query OK, 0 rows affected (0.02 sec)
+
+mysql> 
+mysql> -- 2. Products Inventory Table
+mysql> CREATE TABLE Products (
+    ->     Product_ID INT PRIMARY KEY,
+    ->     Product_Name VARCHAR(150) NOT NULL,
+    ->     Category VARCHAR(50) CHECK (Category IN ('Electronics', 'Clothing', 'Home Decor', 'Fitness')),
+    ->     Price DECIMAL(10,2) NOT NULL,
+    ->     Stock_Count INT DEFAULT 0,
+    ->     Store_ID INT,
+    ->     FOREIGN KEY (Store_ID) REFERENCES Stores(Store_ID) ON DELETE SET NULL
+    -> );
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> 
+mysql> -- 3. Customer Orders Master Table
+mysql> CREATE TABLE Orders (
+    ->     Order_ID INT PRIMARY KEY AUTO_INCREMENT,
+    ->     Customer_Name VARCHAR(100) NOT NULL,
+    ->     Order_Date DATE NOT NULL,
+    ->     Delivery_City VARCHAR(50) DEFAULT 'Visakhapatnam',
+    ->     Payment_Method VARCHAR(20) CHECK (Payment_Method IN ('Online', 'Cash on Delivery'))
+    -> );
+Query OK, 0 rows affected (0.02 sec)
+
+mysql> 
+mysql> -- 4. Order Items Transaction Table (The Bridge Table)
+mysql> CREATE TABLE Order_Items (
+    ->     Order_ID INT,
+    ->     Product_ID INT,
+    ->     Quantity INT NOT NULL CHECK (Quantity > 0),
+    ->     Item_Total_Price DECIMAL(10,2),
+    ->     PRIMARY KEY (Order_ID, Product_ID),
+    ->     FOREIGN KEY (Order_ID) REFERENCES Orders(Order_ID) ON DELETE CASCADE,
+    ->     FOREIGN KEY (Product_ID) REFERENCES Products(Product_ID) ON DELETE CASCADE
+    -> );
+Query OK, 0 rows affected (0.06 sec)
+
+mysql> -- Insert Vendors
+mysql> INSERT INTO Stores (Store_Name, Seller_Location) VALUES 
+    -> ('Alpha Electronics', 'Visakhapatnam'),
+    -> ('Trendz Apparels', 'Hyderabad'),
+    -> ('Modern Living Furnishings', 'Bangalore'),
+    -> ('Apex Sports Gear', 'Visakhapatnam');
+Query OK, 4 rows affected (0.00 sec)
+Records: 4  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Insert 15 Unique Products (Items 7006 and 7015 have 0 stock)
+mysql> INSERT INTO Products VALUES 
+    -> (7001, 'Mechanical Gaming Keyboard', 'Electronics', 2499.00, 45, 1),
+    -> (7002, 'Wireless Ergonomic Mouse', 'Electronics', 1200.00, 60, 1),
+    -> (7003, 'Noise Cancelling Headphones', 'Electronics', 4500.00, 20, 1),
+    -> (7004, 'Oversized Cotton Hoodie', 'Clothing', 1499.00, 100, 2),
+    -> (7005, 'Slim Fit Denim Jeans', 'Clothing', 1899.00, 85, 2),
+    -> (7006, 'Round Wall-Mounted Mirror', 'Home Decor', 999.00, 0, 3),   -- OUT OF STOCK
+    -> (7007, 'Metal Folding Single Bed', 'Home Decor', 3500.00, 8, 3),
+    -> (7008, 'King-Size Mosquito Net', 'Home Decor', 650.00, 150, 3),
+    -> (7009, 'Pro Badminton Racket', 'Fitness', 2100.00, 30, 4),
+    -> (7010, 'Premium Shuttlecocks (Pack of 12)', 'Fitness', 850.00, 200, 4),
+    -> (7011, 'Smart Fitness Tracker Watch', 'Electronics', 3200.00, 40, 1),
+    -> (7012, 'Shiatsu Electric Foot Massager', 'Electronics', 2800.00, 12, 1),
+    -> (7013, 'Slotted Angle Luggage Rack', 'Home Decor', 1150.00, 25, 3),
+    -> (7014, 'Sports Training Tracksuit', 'Clothing', 1750.00, 50, 2),
+    -> (7015, 'Yoga Mat Non-Slip', 'Fitness', 550.00, 0, 4);               -- OUT OF STOCK
+Query OK, 15 rows affected (0.00 sec)
+Records: 15  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Insert Customer Purchase Orders
+mysql> INSERT INTO Orders (Customer_Name, Order_Date, Delivery_City, Payment_Method) VALUES 
+    -> ('Rahul Verma', '2026-05-10', 'Visakhapatnam', 'Online'),
+    -> ('K. Jaisri', '2026-05-12', 'Visakhapatnam', 'Cash on Delivery'),
+    -> ('Sai Kumar', '2026-05-14', 'Hyderabad', 'Online'),
+    -> ('Sneha Reddy', '2026-05-15', 'Bangalore', 'Online'),
+    -> ('B. Harish', '2026-05-16', 'Tirupati', 'Cash on Delivery');
+Query OK, 5 rows affected (0.00 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Link Purchased Items to Orders
+mysql> INSERT INTO Order_Items VALUES 
+    -> (1, 7001, 1, 2499.00), 
+    -> (1, 7002, 2, 2400.00), 
+    -> (2, 7007, 1, 3500.00), 
+    -> (2, 7008, 1, 650.00),  
+    -> (2, 7013, 4, 4600.00), 
+    -> (3, 7004, 2, 2998.00), 
+    -> (3, 7005, 1, 1899.00), 
+    -> (4, 7003, 1, 4500.00), 
+    -> (4, 7011, 1, 3200.00), 
+    -> (5, 7009, 2, 4200.00), 
+    -> (5, 7010, 1, 850.00);
+Query OK, 11 rows affected (0.01 sec)
+Records: 11  Duplicates: 0  Warnings: 0
+
+mysql> -- EASY--
+mysql> SELECT Product_Name, Price 
+    -> FROM Products 
+    -> ORDER BY Price ASC;
++-----------------------------------+---------+
+| Product_Name                      | Price   |
++-----------------------------------+---------+
+| Yoga Mat Non-Slip                 |  550.00 |
+| King-Size Mosquito Net            |  650.00 |
+| Premium Shuttlecocks (Pack of 12) |  850.00 |
+| Round Wall-Mounted Mirror         |  999.00 |
+| Slotted Angle Luggage Rack        | 1150.00 |
+| Wireless Ergonomic Mouse          | 1200.00 |
+| Oversized Cotton Hoodie           | 1499.00 |
+| Sports Training Tracksuit         | 1750.00 |
+| Slim Fit Denim Jeans              | 1899.00 |
+| Pro Badminton Racket              | 2100.00 |
+| Mechanical Gaming Keyboard        | 2499.00 |
+| Shiatsu Electric Foot Massager    | 2800.00 |
+| Smart Fitness Tracker Watch       | 3200.00 |
+| Metal Folding Single Bed          | 3500.00 |
+| Noise Cancelling Headphones       | 4500.00 |
++-----------------------------------+---------+
+15 rows in set (0.00 sec)
+
+mysql> SELECT * FROM Orders 
+    -> WHERE Delivery_City = 'Visakhapatnam';
++----------+---------------+------------+---------------+------------------+
+| Order_ID | Customer_Name | Order_Date | Delivery_City | Payment_Method   |
++----------+---------------+------------+---------------+------------------+
+|        1 | Rahul Verma   | 2026-05-10 | Visakhapatnam | Online           |
+|        2 | K. Jaisri     | 2026-05-12 | Visakhapatnam | Cash on Delivery |
++----------+---------------+------------+---------------+------------------+
+2 rows in set (0.00 sec)
+
+mysql> SELECT Product_Name, Stock_Count 
+    -> FROM Products 
+    -> WHERE Stock_Count = 0;
++---------------------------+-------------+
+| Product_Name              | Stock_Count |
++---------------------------+-------------+
+| Round Wall-Mounted Mirror |           0 |
+| Yoga Mat Non-Slip         |           0 |
++---------------------------+-------------+
+2 rows in set (0.00 sec)
+
+mysql> -- MEDIUM --
+mysql> SELECT Products.Product_Name, Stores.Store_Name, Stores.Seller_Location
+    -> FROM Products
+    -> INNER JOIN Stores ON Products.Store_ID = Stores.Store_ID;
++-----------------------------------+---------------------------+-----------------+
+| Product_Name                      | Store_Name                | Seller_Location |
++-----------------------------------+---------------------------+-----------------+
+| Mechanical Gaming Keyboard        | Alpha Electronics         | Visakhapatnam   |
+| Wireless Ergonomic Mouse          | Alpha Electronics         | Visakhapatnam   |
+| Noise Cancelling Headphones       | Alpha Electronics         | Visakhapatnam   |
+| Smart Fitness Tracker Watch       | Alpha Electronics         | Visakhapatnam   |
+| Shiatsu Electric Foot Massager    | Alpha Electronics         | Visakhapatnam   |
+| Oversized Cotton Hoodie           | Trendz Apparels           | Hyderabad       |
+| Slim Fit Denim Jeans              | Trendz Apparels           | Hyderabad       |
+| Sports Training Tracksuit         | Trendz Apparels           | Hyderabad       |
+| Round Wall-Mounted Mirror         | Modern Living Furnishings | Bangalore       |
+| Metal Folding Single Bed          | Modern Living Furnishings | Bangalore       |
+| King-Size Mosquito Net            | Modern Living Furnishings | Bangalore       |
+| Slotted Angle Luggage Rack        | Modern Living Furnishings | Bangalore       |
+| Pro Badminton Racket              | Apex Sports Gear          | Visakhapatnam   |
+| Premium Shuttlecocks (Pack of 12) | Apex Sports Gear          | Visakhapatnam   |
+| Yoga Mat Non-Slip                 | Apex Sports Gear          | Visakhapatnam   |
++-----------------------------------+---------------------------+-----------------+
+15 rows in set (0.00 sec)
+
+mysql> SELECT Orders.Order_ID, Orders.Customer_Name, Order_Items.Product_ID, Order_Items.Quantity
+    -> FROM Order_Items
+    -> INNER JOIN Orders ON Order_Items.Order_ID = Orders.Order_ID;
++----------+---------------+------------+----------+
+| Order_ID | Customer_Name | Product_ID | Quantity |
++----------+---------------+------------+----------+
+|        1 | Rahul Verma   |       7001 |        1 |
+|        1 | Rahul Verma   |       7002 |        2 |
+|        2 | K. Jaisri     |       7007 |        1 |
+|        2 | K. Jaisri     |       7008 |        1 |
+|        2 | K. Jaisri     |       7013 |        4 |
+|        3 | Sai Kumar     |       7004 |        2 |
+|        3 | Sai Kumar     |       7005 |        1 |
+|        4 | Sneha Reddy   |       7003 |        1 |
+|        4 | Sneha Reddy   |       7011 |        1 |
+|        5 | B. Harish     |       7009 |        2 |
+|        5 | B. Harish     |       7010 |        1 |
++----------+---------------+------------+----------+
+11 rows in set (0.00 sec)
+
+mysql> SELECT P.Category, COUNT(P.Product_ID) AS Total_Items
+    -> FROM Products P
+    -> GROUP BY P.Category;
++-------------+-------------+
+| Category    | Total_Items |
++-------------+-------------+
+| Electronics |           5 |
+| Clothing    |           3 |
+| Home Decor  |           4 |
+| Fitness     |           3 |
++-------------+-------------+
+4 rows in set (0.00 sec)
+
+mysql> -- HARD --
+mysql> SELECT S.Store_Name, SUM(OI.Item_Total_Price) AS Total_Sales
+    -> FROM Order_Items OI
+    -> INNER JOIN Products P ON OI.Product_ID = P.Product_ID
+    -> INNER JOIN Stores S ON P.Store_ID = S.Store_ID
+    -> GROUP BY S.Store_Name;
++---------------------------+-------------+
+| Store_Name                | Total_Sales |
++---------------------------+-------------+
+| Alpha Electronics         |    12599.00 |
+| Trendz Apparels           |     4897.00 |
+| Modern Living Furnishings |     8750.00 |
+| Apex Sports Gear          |     5050.00 |
++---------------------------+-------------+
+4 rows in set (0.00 sec)
+
+mysql> SELECT O.Customer_Name, S.Store_Name, SUM(OI.Quantity) AS Total_Pieces_Ordered
+    -> FROM Order_Items OI
+    -> INNER JOIN Orders O ON OI.Order_ID = O.Order_ID
+    -> INNER JOIN Products P ON OI.Product_ID = P.Product_ID
+    -> INNER JOIN Stores S ON P.Store_ID = S.Store_ID
+    -> GROUP BY O.Customer_Name, S.Store_Name;
++---------------+---------------------------+----------------------+
+| Customer_Name | Store_Name                | Total_Pieces_Ordered |
++---------------+---------------------------+----------------------+
+| Rahul Verma   | Alpha Electronics         |                    3 |
+| Sneha Reddy   | Alpha Electronics         |                    2 |
+| Sai Kumar     | Trendz Apparels           |                    3 |
+| K. Jaisri     | Modern Living Furnishings |                    6 |
+| B. Harish     | Apex Sports Gear          |                    3 |
++---------------+---------------------------+----------------------+
+5 rows in set (0.00 sec)
+
+mysql> SELECT P.Category, COUNT(P.Product_ID) AS Total_Items
+    -> FROM Products P
+    -> GROUP BY P.Category;
++-------------+-------------+
+| Category    | Total_Items |
++-------------+-------------+
+| Electronics |           5 |
+| Clothing    |           3 |
+| Home Decor  |           4 |
+| Fitness     |           3 |
++-------------+-------------+
+4 rows in set (0.00 sec)
+
+mysql> EXIT
